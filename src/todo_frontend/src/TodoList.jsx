@@ -11,6 +11,7 @@ const TodoList = () => {
   const [newTask, setNewTask] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [identity, setIdentity] = useState(null);
 
   const initAuth = useCallback(async () => {
     try {
@@ -33,14 +34,21 @@ const TodoList = () => {
 
   const handleAuthenticated = async (client) => {
     const identity = await client.getIdentity();
+    setIdentity(identity);
     initActor(identity);
   };
 
   const initActor = (identity) => {
-    const agent = new HttpAgent({ identity });
+    const agent = new HttpAgent({ 
+        identity,
+        host: process.env.REACT_APP_IC_HOST || "https://ic0.app"
+    });
 
     // When deploying live, remove this line
-    agent.fetchRootKey().catch(console.error);
+    // Only fetch the root key in development
+    if (process.env.NODE_ENV !== "production") {
+        agent.fetchRootKey().catch(console.error);
+    }
 
     const actorInstance = Actor.createActor(idlFactory, {
       agent,
@@ -51,26 +59,20 @@ const TodoList = () => {
   };
 
   const login = async () => {
-    try {
-      await authClient.login({
-        identityProvider: process.env.REACT_APP_II_URL || "https://identity.ic0.app",
-        onSuccess: () => {
-          handleAuthenticated(authClient);
-        },
-      });
-    } catch (err) {
-      setError(`Login failed: ${err.message}`);
-    }
+    await authClient.login({
+      identityProvider: process.env.REACT_APP_II_URL || "https://identity.ic0.app",
+      onSuccess: () => {
+        handleAuthenticated(authClient);
+      },
+    });
   };
 
   const logout = async () => {
-    try {
-      await authClient.logout();
-      setActor(null);
-      setTasks([]);
-    } catch (err) {
-      setError(`Logout failed: ${err.message}`);
-    }
+    await authClient.logout();
+    // Clear local state
+    setActor(null);
+    setIdentity(null);
+    setTasks([]);
   };
 
   const fetchTasks = async (actorInstance) => {
@@ -116,16 +118,28 @@ const TodoList = () => {
     }
   };
 
+  const checkIdentity = async () => {
+    if (actor) {
+      try {
+        const principal = await actor.whoami();
+        console.log("Current principal:", principal);
+      } catch (err) {
+        setError(`Failed to check identity: ${err.message}`);
+      }
+    }
+  };
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
-      {!actor ? (
+      {!identity ? (
         <button onClick={login}>Login with Internet Identity</button>
       ) : (
         <div>
           <button onClick={logout}>Logout</button>
+          <button onClick={checkIdentity}>Check Identity</button>
           <h1>To-Do List</h1>
           <input
             type="text"
