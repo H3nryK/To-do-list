@@ -75,14 +75,21 @@ const TodoList = () => {
     setTasks([]);
   };
 
-  const fetchTasks = async (actorInstance) => {
-    try {
-      const result = await actorInstance.getAllTasks();
-      setTasks(result);
-    } catch (err) {
-      setError(`Failed to fetch tasks: ${err.message}`);
-    }
-  };
+  // const fetchTasks = async () => {
+  //   try {
+  //     console.log("Fetching tasks...");
+  //     const result = await getAllTasks(actor);
+  //     console.log("Tasks fetched successfully:", result);
+  //     setTasks(result);
+  //   } catch (err) {
+  //     console.error("Failed to fetch tasks:", err);
+  //     setError(`Failed to fetch tasks: ${err.toString()}`);
+      
+  //     console.log("Actor instance:", actorInstance);
+  //     console.log("Canister ID:", canisterId);
+  //     console.log("Identity:", identity?.getPrincipal().toText());
+  //   }
+  // };
 
   const addTask = async () => {
     if (newTask.trim() !== '' && actor) {
@@ -148,7 +155,7 @@ const TodoList = () => {
             placeholder="New task"
           />
           <button onClick={addTask}>Add Task</button>
-          <ul>
+          {/* <ul>
             {tasks.map((task) => (
               <li key={task.id}>
                 <input
@@ -160,7 +167,7 @@ const TodoList = () => {
                 <button onClick={() => deleteTask(task.id)}>Delete</button>
               </li>
             ))}
-          </ul>
+          </ul> */}
         </div>
       )}
     </div>
